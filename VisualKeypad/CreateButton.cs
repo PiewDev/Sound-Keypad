@@ -17,17 +17,30 @@ namespace VisualKeypad
     {
         private List<String> Tags = new List<string>();
         private string path;
+        private Sound sound = new Sound();
         public CreateButton()
         {
             InitializeComponent();        
         }
-        public CreateButton(object sender, DragEventArgs e)
-           
+        public CreateButton(object sender, DragEventArgs e)          
         {
-            InitializeComponent();
+            InitializeComponent();            
             this.label1_DragDrop(sender, e);            
         }
+        public CreateButton(SoundButton btn)
+        {
+            InitializeComponent();
+            this.sound = btn.Sound;
+            this.path = btn.Sound.SoundPath;
+            this.textBoxName.Text = btn.Sound.Name;
+            foreach (var tag in btn.Sound.Tags)
+            {
+                this.CreateLabel(tag);
+            }
+            this.labelFile.Text = Path.GetFileName(this.path);
+          
 
+        }
 
 
         private void openFileDialog1_FileOk(object sender, CancelEventArgs e)
@@ -97,7 +110,7 @@ namespace VisualKeypad
             {
                 try
                 {
-                    Sound sound = new Sound(this.textBoxName.Text, this.Tags, this.path);                   
+                    this.sound.Modify(this.textBoxName.Text, this.path, this.Tags);                   
                     owned.SaveSound(sound);                    
                     //owned.CreateButtonInFlowButtonSounds(this.textBoxName.Text,id, this);
                     DialogResult saved = MessageBox.Show("Do you want to create another sound?", "Saved successfully", MessageBoxButtons.YesNo);
@@ -165,21 +178,26 @@ namespace VisualKeypad
                         if (item.Name == richTextBoxTags.Text)
                             flowLabelTags.Controls.Remove(item);
                     }
-                    Label lbl = new Label()
-                    {
-                        Name = richTextBoxTags.Text,
-                        Text = richTextBoxTags.Text,
-                        ForeColor = Color.White
-                    };
-                    lbl.Click += new EventHandler(DeleteLabel);
-                    flowLabelTags.Controls.Add(lbl);
-                    this.Tags.Add(this.richTextBoxTags.Text);
+                    CreateLabel(richTextBoxTags.Text);
                     this.richTextBoxTags.Text = "";
-                }                
+                }
                 e.Handled = true;
             }
             
 
+        }
+
+        private void CreateLabel(string text)
+        {
+            Label lbl = new Label()
+            {
+                Name = text,
+                Text = text,
+                ForeColor = Color.White
+            };
+            lbl.Click += new EventHandler(DeleteLabel);
+            flowLabelTags.Controls.Add(lbl);
+            this.Tags.Add(text);
         }
 
         private void richTextBoxTags_TextChanged_1(object sender, EventArgs e)

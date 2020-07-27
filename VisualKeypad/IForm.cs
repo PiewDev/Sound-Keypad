@@ -8,5 +8,6 @@ namespace VisualKeypad
     {
         //void CreateButtonInFlowButtonSounds(string name, string id, object owner);
         void SaveSound(Sound sound);
+        bool ExistPlayList(string name);
     }
 }

@@ -18,18 +18,21 @@ namespace VisualKeypad
     {
         public int xClick = 0, yClick = 0;
         public IKeypad keypad { get; set; }
-        private List<String> TagsOn = new List<string>();
-        private WindowsMediaPlayer wplayer = new WindowsMediaPlayer();
+        private List<String> tagsOn = new List<string>();
+        private WindowsMediaPlayer wPlayer = new WindowsMediaPlayer();
         private PlayList playList = new PlayList("");
         private Size minSize;
         private Size defaultSize;        
         private int playListLeft;
         private int defaultLeft;
-        Cursor BitMapCursor;
-        Point mousepos;
+        Cursor bitMapCursor;
+        Point mousePos;
+        public delegate void EventMenu(object sender, EventArgs e, SoundButton sound);
+
         
         public MenuPrincipal()
         {            
+            
             this.keypad = new Keypad();
             this.keypad.SoundsChange += Keypad_SoundsChange;
             this.keypad.TagsChange += Keypad_TagsChange;
@@ -40,8 +43,28 @@ namespace VisualKeypad
             this.minSize = new Size(1122, this.Size.Height);            
             this.comboBoxPlayList.ValueMember = "Name";
             this.comboBoxPlayList.DisplayMember = "Name";
+
             //this.checkedListBoxTags.Items.AddRange(this.GetTagList().ToArray());          
-            
+
+        }
+
+        private void DeleteSound_Click(SoundButton btn)
+        {
+            if (btn.IsPlayList == false)
+            {
+                this.DeleteSound(btn.Sound);
+            }
+            else
+            {
+                this.DeleteSoundInPlayList(btn.Sound);
+            }
+        }
+
+        private void ModifySound_Click(SoundButton btn)
+        {
+            CreateButton createbtn = new CreateButton(btn);
+            createbtn.Owner = this;
+            createbtn.Show();
         }
 
         private void Keypad_PlayListChange()
@@ -87,7 +110,7 @@ namespace VisualKeypad
         private void LoadButtons()
         {
             this.FlowButtonSounds.Controls.Clear();
-            if (this.TagsOn.Count == 0)
+            if (this.tagsOn.Count == 0)
             {
                 foreach (var sound in this.ReturnSounds())
                 {
@@ -96,7 +119,7 @@ namespace VisualKeypad
             }
             else
             {
-                foreach (var sound in this.FilterSounds(this.TagsOn))
+                foreach (var sound in this.FilterSounds(this.tagsOn))
                 {
                     this.CreateButtonInFlowButtonSounds(sound);
                 }
@@ -181,6 +204,10 @@ namespace VisualKeypad
             btn.QueryContinueDrag += new QueryContinueDragEventHandler(ClickButton);
             btn.MouseDown += new MouseEventHandler(btn_MouseDown);
             btn.GiveFeedback += new GiveFeedbackEventHandler(btn_GiveFeedback);
+            var contextMenu = new ContextMenu();
+            contextMenu.MenuItems.Add("Modify", new EventHandler((e,sender) => ModifySound_Click(btn)));
+            contextMenu.MenuItems.Add("Delete", new EventHandler((e,sender) => DeleteSound_Click(btn)));
+            btn.ContextMenu = contextMenu;
             return btn;
 
         }
@@ -190,7 +217,7 @@ namespace VisualKeypad
             //Deactivate the default cursor
             e.UseDefaultCursors = false;
             //Use the cursor created from the bitmap
-            Cursor.Current = this.BitMapCursor;
+            Cursor.Current = this.bitMapCursor;
 
 
         }
@@ -198,7 +225,7 @@ namespace VisualKeypad
         private void btn_MouseDown(object sender, MouseEventArgs e)
         {
             //Cast the sender to control type youre using
-            this.mousepos = Cursor.Position;
+            this.mousePos = Cursor.Position;
             SoundButton send = (SoundButton)sender;
             if (e.Button == MouseButtons.Left)
             {
@@ -206,7 +233,7 @@ namespace VisualKeypad
                 Bitmap bmp = new Bitmap(send.Width, send.Height);
                 send.DrawToBitmap(bmp, new Rectangle(Point.Empty, bmp.Size));
                 //In a variable save the cursor with the image of your controler
-                this.BitMapCursor = new Cursor(bmp.GetHicon());
+                this.bitMapCursor = new Cursor(bmp.GetHicon());
                 send.DoDragDrop(send, DragDropEffects.Move);
 
 
@@ -219,19 +246,19 @@ namespace VisualKeypad
         private void ClickButton(object sender, QueryContinueDragEventArgs e)
         {
             SoundButton btn = (SoundButton)sender;           
-            if (e.Action != DragAction.Continue && this.mousepos == Cursor.Position)
+            if (e.Action != DragAction.Continue && this.mousePos == Cursor.Position)
             {
                 
                     string url = this.SearchPath(btn.Sound);
-                    this.wplayer.controls.stop();
-                    if (this.wplayer.URL != url)
+                    this.wPlayer.controls.stop();
+                    if (this.wPlayer.URL != url)
                     {
-                        this.wplayer.URL = url;
-                        this.wplayer.controls.play();
+                        this.wPlayer.URL = url;
+                        this.wPlayer.controls.play();
                     }
                     else
                     {
-                        this.wplayer.URL = "";
+                        this.wPlayer.URL = "";
                     }
                 
             }
@@ -251,11 +278,11 @@ namespace VisualKeypad
             CheckBox chk = (CheckBox)sender;
             if (chk.Checked)
             {
-                this.TagsOn.Add(chk.Name);
+                this.tagsOn.Add(chk.Name);
             }
             else
             {
-                this.TagsOn.Remove(chk.Name);
+                this.tagsOn.Remove(chk.Name);
             }
             this.LoadButtons();
 

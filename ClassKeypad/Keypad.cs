@@ -60,13 +60,21 @@ namespace ClassKeypad
 
 
             }
-            if (e.Action == NotifyCollectionChangedAction.Replace)
+            if (e.Action == NotifyCollectionChangedAction.Add)
             {
-                foreach (var playlist in this.PlayLists)
-                {
-                    playlist.ModifySounds((List<Sound>)e.OldItems, (List <Sound>)e.NewItems);
+                foreach (Sound sound in e.OldItems)
+                {                                       
+                    foreach (var tag in sound.Tags)
+                    {
+                        var existSounds = FilterSounds(tag);
+                        if (existSounds.Count == 0)
+                        {
+                            this.Tags.Remove(tag);
+                        }
+                    }
+
                 }
-               
+
             }
             
 
@@ -174,10 +182,21 @@ namespace ClassKeypad
         {
             try
             {
-                sound.SoundPath = this.CopyFile(sound.SoundPath);              
-                this.Sounds.Add(sound);
-                this.AddTags(sound.Tags);
+                var searchSound = this.Sounds.Where(x => x == sound).FirstOrDefault();
+                if (searchSound != null)
+                {
+                    searchSound.Modify(sound);
+                    this.SoundCollectionChange(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add,this.Sounds));
+                }
+                else
+                {
+                    sound.SoundPath = this.CopyFile(sound.SoundPath);
+                    this.Sounds.Add(sound);
+                    this.AddTags(sound.Tags);
+                }              
                 this.Serialized();
+               
+                
             }
             catch (Exception)
             {
